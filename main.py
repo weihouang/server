@@ -70,57 +70,11 @@ async def create_data(request: Request):
         
         result = supabase.table('Date').insert(data_dict).execute()
         
-        # Return response in the format Retell expects
-        return JSONResponse(
-            status_code=200,
-            content={
-                "result": {
-                    "message": "Data saved successfully",
-                    "data": result.data
-                }
-            }
-        )
+        return 
+       
 
-    except ValueError as e:
-        logger.error(f"Validation error: {str(e)}")
-        return JSONResponse(
-            status_code=422,
-            content={
-                "result": {
-                    "error": "Validation error",
-                    "message": str(e)
-                }
-            }
-        )
-    except Exception as e:
-        logger.error(f"Error processing request: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={
-                "result": {
-                    "error": "Internal server error",
-                    "message": str(e)
-                }
-            }
-        )
+    
 
-# Example endpoint to fetch data from Supabase
-@app.get("/api/v1/data")
-async def get_data():
-    try:
-        # Select data from your Supabase table
-        # Replace 'your_table_name' with your actual table name
-        result = supabase.table('your_table_name').select("*").execute()
-        
-        return {
-            "message": "Data retrieved successfully",
-            "data": result.data
-        }
-    except Exception as e:
-        return {
-            "error": str(e),
-            "message": "Failed to retrieve data from Supabase"
-        }
 
 if __name__ == "__main__":
     import uvicorn
