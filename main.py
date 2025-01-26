@@ -14,8 +14,11 @@ app.add_middleware(
 
 @app.get("/")
 async def hello():
-    print("Hello World")
     return {"message": "Endpoint hit!"}
+
+@app.get("/api/v1/hello")
+async def hello():
+    return {"message": "Hello, World!"}
 
 if __name__ == "__main__":
     import uvicorn
