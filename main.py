@@ -3,8 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client
 import os
 from dotenv import load_dotenv
-from datetime import date
+from datetime import date, datetime
 from pydantic import BaseModel, Field
+import logging
 
 # Load environment variables
 load_dotenv()
@@ -28,9 +29,13 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+# Add logging configuration
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 class DateRange(BaseModel):
-    startdate: date = Field(..., description="The start date for the flight search in YYYY-MM-DD format.")
-    enddate: date = Field(..., description="The end date for the flight search in YYYY-MM-DD format.")
+    startdate: str = Field(..., description="The start date for the flight search in YYYY-MM-DD format.")
+    enddate: str = Field(..., description="The end date for the flight search in YYYY-MM-DD format.")
 
 @app.get("/")
 async def hello():
@@ -44,12 +49,16 @@ async def hello():
 @app.post("/api/v1/data")
 async def create_data(data: DateRange):
     try:
-        # Convert dates to strings for Supabase storage
-        # Note the capital 'D' in startDate and endDate to match Supabase columns
+        # Log the incoming data
+        logger.info(f"Received data: {data}")
+
+        # Convert string dates to proper format
         data_dict = {
-            "startDate": data.startdate.isoformat(),
-            "endDate": data.enddate.isoformat()
+            "startDate": data.startdate,
+            "endDate": data.enddate
         }
+        
+        logger.info(f"Processed data_dict: {data_dict}")
         
         result = supabase.table('Date').insert(data_dict).execute()
         
@@ -58,6 +67,7 @@ async def create_data(data: DateRange):
             "data": result.data
         }
     except Exception as e:
+        logger.error(f"Error processing request: {str(e)}")
         return {
             "error": str(e),
             "message": "Failed to save data to Supabase"
