@@ -2,4 +2,5 @@ fastapi>=0.68.0
 uvicorn>=0.15.0
 pydantic>=2.0.0
 supabase>=1.0.3
-python-dotenv>=0.19.0 
+python-dotenv>=0.19.0
+retell-sdk>=1.0.0 
