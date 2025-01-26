@@ -69,11 +69,39 @@ async def create_data(request: Request):
         logger.info(f"Processing data: {data_dict}")
         
         result = supabase.table('Date').insert(data_dict).execute()
-        
-        return 
-       
+        # Return response in the format Retell expects
+        return JSONResponse(
+            status_code=200,
+            content={
+                "result": {
+                    "message": "Data saved successfully",
+                    "data": result.data
+                }
+            }
+        )
 
-    
+    except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
+        return JSONResponse(
+            status_code=422,
+            content={
+                "result": {
+                    "error": "Validation error",
+                    "message": str(e)
+                }
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error processing request: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "result": {
+                    "error": "Internal server error",
+                    "message": str(e)
+                }
+            }
+        )
 
 
 if __name__ == "__main__":
