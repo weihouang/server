@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client
 import os
@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 from datetime import date, datetime
 from pydantic import BaseModel, Field
 import logging
+from fastapi.responses import JSONResponse
+import json
 
 # Load environment variables
 load_dotenv()
@@ -41,37 +43,66 @@ class DateRange(BaseModel):
 async def hello():
     return {"message": "Endpoint hit!"}
 
-@app.get("/api/v1/hello")
-async def hello():
-    return {"message": "Hello, World!"}
-
-# Example endpoint that interacts with Supabase
 @app.post("/api/v1/data")
-async def create_data(data: DateRange):
+async def create_data(request: Request):
     try:
-        # Log the incoming data
-        logger.info(f"Received data: {data}")
+        # Get the raw request body
+        body = await request.json()
+        logger.info(f"Received request body: {body}")
 
-        # Convert string dates to proper format
+        # Extract the arguments from the function call
+        args = body.get("args", {})
+        logger.info(f"Extracted args: {args}")
+
+        # Validate the data using Pydantic model
+        data = DateRange(
+            startdate=args.get("startdate"),
+            enddate=args.get("enddate")
+        )
+
+        # Process the data
         data_dict = {
             "startDate": data.startdate,
             "endDate": data.enddate
         }
         
-        logger.info(f"Processed data_dict: {data_dict}")
+        logger.info(f"Processing data: {data_dict}")
         
         result = supabase.table('Date').insert(data_dict).execute()
         
-        return {
-            "message": "Data saved to Supabase successfully",
-            "data": result.data
-        }
+        # Return response in the format Retell expects
+        return JSONResponse(
+            status_code=200,
+            content={
+                "result": {
+                    "message": "Data saved successfully",
+                    "data": result.data
+                }
+            }
+        )
+
+    except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
+        return JSONResponse(
+            status_code=422,
+            content={
+                "result": {
+                    "error": "Validation error",
+                    "message": str(e)
+                }
+            }
+        )
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
-        return {
-            "error": str(e),
-            "message": "Failed to save data to Supabase"
-        }
+        return JSONResponse(
+            status_code=500,
+            content={
+                "result": {
+                    "error": "Internal server error",
+                    "message": str(e)
+                }
+            }
+        )
 
 # Example endpoint to fetch data from Supabase
 @app.get("/api/v1/data")
