@@ -63,7 +63,7 @@ async def create_data(request: Request):
         # Query the database for the matching row
         query = supabase.table('infos') \
             .select("*") \
-            .eq('accountId', data.account_id)
+            .eq('id', 1)
             
         # Log the query for debugging
         logger.info(f"Executing query: {query}")
