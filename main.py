@@ -60,22 +60,16 @@ async def create_data(request: Request):
             enddate=args.get("enddate")
         )
 
-        # Process the data
-        data_dict = {
-            "startDate": data.startdate,
-            "endDate": data.enddate
-        }
-        
-        logger.info(f"Processing data: {data_dict}")
-        
-        result = supabase.table('Date').insert(data_dict).execute()
-        # Return response in the format Retell expects
+        # Return response in the format Retell expects with just the validated data
         return JSONResponse(
             status_code=200,
             content={
                 "result": {
-                    "message": "Data saved successfully",
-                    "data": result.data
+                    "message": "Data received successfully",
+                    "data": {
+                        "startDate": data.startdate,
+                        "endDate": data.enddate
+                    }
                 }
             }
         )
