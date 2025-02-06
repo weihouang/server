@@ -61,10 +61,16 @@ async def create_data(request: Request):
         data = AccountRequest(account_id=args.get("accountId"))
         
         # Query the database for the matching row
-        result = supabase.table('infos') \
+        query = supabase.table('infos') \
             .select("*") \
-            .eq('accountId', data.account_id) \
-            .execute()
+            .eq('accountId', data.account_id)
+            
+        # Log the query for debugging
+        logger.info(f"Executing query: {query}")
+        
+        result = query.execute()
+        # Log the result for debugging
+        logger.info(f"Query result: {result}")
 
         if not result.data:
             return JSONResponse(
@@ -72,7 +78,7 @@ async def create_data(request: Request):
                 content={
                     "result": {
                         "error": "Not found",
-                        "message": "No account found with the provided ID"
+                        "message": f"No account found with ID: {data.account_id}"
                     }
                 }
             )
