@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client
 import os
@@ -38,6 +38,24 @@ logger = logging.getLogger(__name__)
 class DateRange(BaseModel):
     startdate: str = Field(..., description="The start date for the flight search in YYYY-MM-DD format.")
     enddate: str = Field(..., description="The end date for the flight search in YYYY-MM-DD format.")
+
+# Add WebSocket connection manager
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: list[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: str):
+        for connection in self.active_connections:
+            await connection.send_text(message)
+
+manager = ConnectionManager()
 
 @app.get("/")
 async def hello():
@@ -99,6 +117,29 @@ async def create_data(request: Request):
             }
         )
 
+@app.websocket("/ws/transcript")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # Log the received transcription
+            logger.info(f"Received transcription: {data}")
+            
+            # Parse the JSON data
+            try:
+                transcript_data = json.loads(data)
+                # You can process the transcript data here
+                
+                # Broadcast the transcription to all connected clients
+                await manager.broadcast(data)
+            except json.JSONDecodeError:
+                logger.error("Invalid JSON received")
+                
+    except Exception as e:
+        logger.error(f"WebSocket error: {str(e)}")
+    finally:
+        manager.disconnect(websocket)
 
 if __name__ == "__main__":
     import uvicorn
