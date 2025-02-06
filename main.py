@@ -58,18 +58,15 @@ async def create_data(request: Request):
         logger.info(f"Extracted args: {args}")
 
         # Validate the data using Pydantic model
-        data = AccountRequest(account_id=args.get("accountId"))
+        account_id = args.get("accountId")
+        data = AccountRequest(account_id=account_id)
         
-        # Query the database for the matching row
-        query = supabase.table('infos') \
-            .select("*") \
-            .eq('id', 1)
-            
-        # Log the query for debugging
-        logger.info(f"Executing query: {query}")
+        # Query using rpc or raw SQL to ensure exact column matching
+        result = supabase.rpc(
+            'get_account_info',
+            {'account_id_param': account_id}
+        ).execute()
         
-        result = query.execute()
-        # Log the result for debugging
         logger.info(f"Query result: {result}")
 
         if not result.data:
@@ -78,7 +75,7 @@ async def create_data(request: Request):
                 content={
                     "result": {
                         "error": "Not found",
-                        "message": f"No account found with ID: {data.account_id}"
+                        "message": f"No account found with ID: {account_id}"
                     }
                 }
             )
