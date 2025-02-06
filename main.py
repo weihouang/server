@@ -68,7 +68,9 @@ async def create_data(request: Request):
                     "message": "Data received successfully",
                     "data": {
                         "startDate": data.startdate,
-                        "endDate": data.enddate
+                        "endDate": data.enddate,
+                        "Balance": "1000 Dollars",
+                        "Name": "John Doe",
                     }
                 }
             }
